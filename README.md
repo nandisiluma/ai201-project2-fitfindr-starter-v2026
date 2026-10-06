@@ -57,24 +57,35 @@
 
 ### `search_listings`
 
-- **What it does:** searches the listings file and returns matches.
+- **What it does:** searches the listings file and returns matches with the best matches returned first
 - **Inputs:** description (string), size (string), max_price (float)
-- **Returns:** available_listings (list)
+- **Returns:** available_listings (list of listing dicts)
+
+Each listing dict has these fields: id, title, description, category, style_tags (list), size, condition, price (float), colors (list), brand (str or None), platform
+
 - **When it has nothing:** Return an empty list.
 
 ### `suggest_outfit`
 
-- **What it does:** takes an item and a wardrobe, returns outfit ideas.
-- **Inputs:** new_item (dictionary), wardrobe (list of dictionaries)
-- **Returns:** suggested_fit (list)
-- **When it has nothing:** Return an empty list
+- **What it does:** Given a thrifted item and the user's wardrobe, the function suggests one or two outfits
+- **Inputs:**
+  new_item: a listing dict
+  wardrobe: a wardrobe dict with an 'items' key holding a list of items.
+- **Returns:** A non-empty string with outfit suggestions.
+- **When it has nothing:** With an empty wardrobe, return general styling advice rather than raising or returning ""
 
 ### `create_fit_card`
 
 - **What it does:** writes a short caption someone would actually post.
 - **Inputs:** outfit (list or dict?), new_item (dict)
-- **Returns:** caption (str)
-- **When it has nothing:** Return an error string
+- **Returns:** A two-to-four sentence caption (str)
+
+The caption should read like a real post rather than a product description,
+mention the item and its price and platform once each, and be specific about the vibe.
+
+It should also come out **differently for different inputs**.
+
+- **When it has nothing:** Return return a descriptive message (str)
 
 ---
 
