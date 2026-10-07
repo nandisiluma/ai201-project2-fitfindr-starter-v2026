@@ -39,7 +39,15 @@
 
 ## What This Does
 
-<!-- Three or four sentences: what a user asks for, and what they get back. -->
+A user types a plain-language request for a thrifted piece, something like
+"vintage graphic tee under $30, size M" — and the agent searches the mock
+listings for a match. If it finds one, it suggests an outfit built around the
+user's existing wardrobe (or general styling advice if they haven't entered
+one), then writes a short, ready-to-post caption naming the item, its price,
+and the platform it's on.
+If nothing matches, the agent stops before calling
+the model any further and tells the user what to change — a broader
+description, a different size, or a higher price ceiling.
 
 ---
 
@@ -213,15 +221,15 @@ Manifested a pair of Vintage Levi's 501 Jeans in the absolute best medium wash a
 
 **Moment 1**
 
-- _What I asked for:_
-- _What came back:_
-- _What I changed:_
+- _What I asked for:_ I asked Claude to critique my acceptance criteria
+- _What came back:_ Gave me feedback that criterion #5 was ambiguous
+- _What I changed:_ Tightened the criterion by specifying the exact function whose output (size) we'll be scoring against.
 
 **Moment 2**
 
-- _What I asked for:_
-- _What came back:_
-- _What I changed:_
+- _What I asked for:_ I asked Claude to check whether my Tool Inventory was complete enough for someone to build the tools from it without asking me anything.
+- _What came back:_ It caught that I'd written wardrobe as "list of dictionaries" and suggested_fit (list) as the return type, but the actual function signature takes a dict with an 'items' key and returns a str.
+- _What I changed:_ Fixed both the input type and return type in the inventory so they match the real function signature.
 
 <!-- ═══════════════════════ UNIT 4 — THE TEST ═══════════════════════
 
