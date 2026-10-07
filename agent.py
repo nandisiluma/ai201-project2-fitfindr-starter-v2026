@@ -17,6 +17,8 @@ import re
 
 import config
 import trace
+import mcp_client
+from mcp_client import call_tool
 from tools import search_listings, suggest_outfit, create_fit_card
 from generate import ModelUnavailable
 
@@ -135,7 +137,8 @@ def run_agent(query: str, wardrobe: dict) -> dict:
         parsed = _parse_query(query)
         session["parsed"] = parsed
 
-        results = search_listings(**parsed)
+        # results = search_listings(**parsed)
+        results = mcp_client.call_tool("search_listings", parsed)
         session["search_results"] = results
 
         if not results:
