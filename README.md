@@ -308,16 +308,37 @@ that produced it:
      the same length, your branch isn't working — and this is the fastest way
      anyone will ever find that out. -->
 
-**Happy path**
+**Happy path** — `python app.py ask 'vintage graphic tee under $30, size M' --trace`
 
 ```
-
+[1] parse_query
+      in:  vintage graphic tee under $30, size M
+      out: {'description': 'vintage graphic tee', 'size': 'M', 'max_price': 30.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'vintage graphic tee', 'size': 'M', 'max_price': 30.0}
+      out: 8 items: Y2K Baby Tee — Butterfly Print, Mesh Long-Sleeve Top — Black, 90s Silk Slip Dress — Floral, Midi Length … +5 more
+[3] select_item
+      in:  results[0]
+      out: Y2K Baby Tee — Butterfly Print ($18.0, depop)
+[4] suggest_outfit
+      in:  item='Y2K Baby Tee — Butterfly Print', wardrobe_items=10
+      out: **Outfit 1: Y2K Streetwear** *   **Top:** Y2K Baby Tee — Butterfly Print *   **Bottoms:** Baggy straight-leg j…
+[5] create_fit_card
+      in:  item='Y2K Baby Tee — Butterfly Print'
+      out: I seriously can’t believe I scored this Y2K baby tee on depop for only $18. The little pink and purple butterf…
 ```
 
-**Empty search**
+**Empty search** — `python app.py ask 'designer ballgown size XXS under $5' --trace`
 
 ```
-
+[1] parse_query
+      in:  designer ballgown size XXS under $5
+      out: {'description': 'designer ballgown', 'size': 'XXS', 'max_price': 5.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'designer ballgown', 'size': 'XXS', 'max_price': 5.0}
+      out: [] (empty)
+[3] branch
+      →    no results, stopping before suggest_outfit
 ```
 
 **On the MCP move:** <!-- what changed in your code, and whether anything
