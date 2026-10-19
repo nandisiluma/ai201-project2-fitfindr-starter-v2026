@@ -56,7 +56,14 @@ There is no point in continuing to call the model if there are no matching listi
      compares session["selected_item"] against what actually reached
      suggest_outfit is the shape you're after. -->
 
-Given a query that matches at least one listing, the 'new_item' passed to the next tool has the same item_id as item returned by the previous tool, 5 out of 5 times.
+Given a query that matches at least one listing, the 'new_item' passed to the next tool has the same id as item returned by the previous tool, 5 out of 5 times.
+
+> **Revised in unit 4:** Given a query that matches at least one listing, the
+> `new_item` passed to the next tool has the same `id` as `session["selected_item"]`
+> (the item returned by the previous tool), 5 out of 5 times.
+>
+> **Why revised:** listings have no `item_id` field — the field is `id` — so the
+> original wording couldn't be checked against the data as written.
 
 **Why this target:**
 
@@ -94,7 +101,14 @@ Price and platform are fields we control and can inject directly into the prompt
      search respects a price ceiling — anything, as long as it names a number
      or an observable outcome. -->
 
-Given a query that specifies the size of the item, suggest_outfit returns a fit that matches the size in the query 4 out of 5 times.
+Given a query that specifies the size of the item, the model returns a fit that matches the size in the query 4 out of 5 times.
+
+> **Revised in unit 4:** Given a query that specifies the size of the item, the
+> model returns a fit that matches the size in the query 4 out of 5 times.
+>
+> **Why revised:** `suggest_outfit` never receives the size from the query — it
+> only gets the item and the wardrobe — so the tool can't be what honors the
+> size. The model is the one producing the fit, so the criterion now says so.
 
 **Why this target:**
 

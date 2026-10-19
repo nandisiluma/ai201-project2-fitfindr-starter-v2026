@@ -250,17 +250,34 @@ Manifested a pair of Vintage Levi's 501 Jeans in the absolute best medium wash a
      into results/. Paste it here and fill in the verdicts. -->
 
 | Criterion | Target | Try 1 | Try 2 | Try 3 | Try 4 | Try 5 | Verdict |
-| --------- | ------ | ----- | ----- | ----- | ----- | ----- | ------- |
-| 1.        |        |       |       |       |       |       |         |
-| 2.        |        |       |       |       |       |       |         |
-| 3.        |        |       |       |       |       |       |         |
-| 4.        |        |       |       |       |       |       |         |
-| 5.        |        |       |       |       |       |       |         |
+|---|---|---|---|---|---|---|---|
+| 1. matching query completes | 4/5 | PASS  | PASS  | PASS  | PASS  | PASS  | MET |
+| 2. impossible query stops early | 5/5 | PASS  | PASS  | PASS  | PASS  | PASS  | PASS |
+| empty wardrobe _(diagnostic — not one of your five)_ |  |   |   |   |   |   |  |
+| 3. selected item reaches suggest_outfit | 5/5 | PASS  | PASS  | PASS  | PASS  | PASS  | MET |
+| 4. fit card names price and platform | 5/5 | FAILED (sentence cut off)  | PASS  | PASS  | PASS  | PASS  | MISSED (4/5) |
+| 5. size in query is respected | 4/5 | PASS  | PASS  | PASS  | PASS  | PASS  | MET |
 
 **Real output from one try**, pasted as text, naming the file and function
 that produced it:
 
 ```
+
+[1] parse_query
+in: vintage graphic tee under $30, size M
+out: {'description': 'vintage graphic tee', 'size': 'M', 'max_price': 30.0}
+[2] search_listings (via MCP)
+in: {'description': 'vintage graphic tee', 'size': 'M', 'max_price': 30.0}
+out: 8 items: Y2K Baby Tee — Butterfly Print, Mesh Long-Sleeve Top — Black, 90s Silk Slip Dress — Floral, Midi Length … +5 more
+[3] select_item
+in: results[0]
+out: Y2K Baby Tee — Butterfly Print ($18.0, depop)
+[4] suggest_outfit
+in: item='Y2K Baby Tee — Butterfly Print', wardrobe_items=10
+out: **Outfit 1: Y2K Streetwear Contrast** _ **Top:** Y2K Baby Tee — Butterfly Print _ **Bottoms:** Baggy strai…
+[5] create_fit_card
+in: item='Y2K Baby Tee — Butterfly Print'
+out: Found this absolute holy grail Y2K baby tee with the cutest butterfly print on depop today for only $18. It’s …
 
 ```
 
@@ -286,13 +303,16 @@ that produced it:
 
 | #   | Criterion | Target | Verdict | How I decided |
 | --- | --------- | ------ | ------- | ------------- |
-| 1   |           |        |         |               |
-| 2   |           |        |         |               |
-| 3   |           |        |         |               |
-| 4   |           |        |         |               |
-| 5   |           |        |         |               |
+| 1   | Matching query completes all three tools | 4/5 | MET | 5/5 tries PASS, above the 4/5 target. |
+| 2   | Impossible query stops before the second tool | 5/5 | MET | 5/5 tries PASS, which meets the 5/5 target. |
+| 3   | Selected item reaches suggest_outfit | 5/5 | MET | 5/5 tries PASS, which meets the 5/5 target. |
+| 4   | Fit card names price and platform | 5/5 | MISSED | 4/5 tries PASS against a 5/5 target. Try 1 failed because the caption was cut off mid-sentence. |
+| 5   | Size in query is respected | 4/5 | MET | 5/5 tries PASS, above the 4/5 target. |
 
 **Diagnoses**
+
+- **Criterion 4 (fit card), the model's output, in `create_fit_card` in tools.py.** It missed on 1 of 5 tries. In try 1 the caption stopped mid-sentence, so the price and platform mention was incomplete. The tool ran and the item data was correct. The failure was in the generated text. The prompt asks for two to four sentences with price and platform each mentioned once, but nothing in the prompt or the `generate()` call guarantees a complete caption. The cut-off looks like a truncated model response, though I haven't confirmed the cause (for example a token limit). The cause is a guess until I check the raw response. Because it appeared in only 1 of 5 tries, it is a model-variance problem and not a deterministic bug in the tool or the loop.
+- **Criteria 1, 2, 3 and 5:** no misses, so nothing to diagnose. Criterion 2 is listed as MET and not PASS, because MET and MISSED are the verdict values for this table.
 
 ---
 
@@ -311,34 +331,38 @@ that produced it:
 **Happy path** — `python app.py ask 'vintage graphic tee under $30, size M' --trace`
 
 ```
+
 [1] parse_query
-      in:  vintage graphic tee under $30, size M
-      out: {'description': 'vintage graphic tee', 'size': 'M', 'max_price': 30.0}
+in: vintage graphic tee under $30, size M
+out: {'description': 'vintage graphic tee', 'size': 'M', 'max_price': 30.0}
 [2] search_listings (via MCP)
-      in:  {'description': 'vintage graphic tee', 'size': 'M', 'max_price': 30.0}
-      out: 8 items: Y2K Baby Tee — Butterfly Print, Mesh Long-Sleeve Top — Black, 90s Silk Slip Dress — Floral, Midi Length … +5 more
+in: {'description': 'vintage graphic tee', 'size': 'M', 'max_price': 30.0}
+out: 8 items: Y2K Baby Tee — Butterfly Print, Mesh Long-Sleeve Top — Black, 90s Silk Slip Dress — Floral, Midi Length … +5 more
 [3] select_item
-      in:  results[0]
-      out: Y2K Baby Tee — Butterfly Print ($18.0, depop)
+in: results[0]
+out: Y2K Baby Tee — Butterfly Print ($18.0, depop)
 [4] suggest_outfit
-      in:  item='Y2K Baby Tee — Butterfly Print', wardrobe_items=10
-      out: **Outfit 1: Y2K Streetwear** *   **Top:** Y2K Baby Tee — Butterfly Print *   **Bottoms:** Baggy straight-leg j…
+in: item='Y2K Baby Tee — Butterfly Print', wardrobe_items=10
+out: **Outfit 1: Y2K Streetwear** _ **Top:** Y2K Baby Tee — Butterfly Print _ **Bottoms:** Baggy straight-leg j…
 [5] create_fit_card
-      in:  item='Y2K Baby Tee — Butterfly Print'
-      out: I seriously can’t believe I scored this Y2K baby tee on depop for only $18. The little pink and purple butterf…
+in: item='Y2K Baby Tee — Butterfly Print'
+out: I seriously can’t believe I scored this Y2K baby tee on depop for only $18. The little pink and purple butterf…
+
 ```
 
 **Empty search** — `python app.py ask 'designer ballgown size XXS under $5' --trace`
 
 ```
+
 [1] parse_query
-      in:  designer ballgown size XXS under $5
-      out: {'description': 'designer ballgown', 'size': 'XXS', 'max_price': 5.0}
+in: designer ballgown size XXS under $5
+out: {'description': 'designer ballgown', 'size': 'XXS', 'max_price': 5.0}
 [2] search_listings (via MCP)
-      in:  {'description': 'designer ballgown', 'size': 'XXS', 'max_price': 5.0}
-      out: [] (empty)
+in: {'description': 'designer ballgown', 'size': 'XXS', 'max_price': 5.0}
+out: [] (empty)
 [3] branch
-      →    no results, stopping before suggest_outfit
+→ no results, stopping before suggest_outfit
+
 ```
 
 **On the MCP move:** <!-- what changed in your code, and whether anything
