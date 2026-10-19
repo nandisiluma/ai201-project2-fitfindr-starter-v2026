@@ -264,4 +264,22 @@ def create_fit_card(outfit: str, new_item: dict) -> str:
         "about. Sound like a person posting online, not an ad."
     )
 
-    return generate(prompt, system=system)
+    # The model sometimes returns a caption that stops mid-sentence or drops
+    # the price or platform. Check it and ask again, bypassing the cache (which
+    # would hand back the same bad answer), before giving up.
+    card = ""
+    for attempt in range(3):
+        card = generate(prompt, system=system, cache=(attempt == 0))
+        if _fit_card_is_complete(card, new_item):
+            break
+    return card
+
+
+def _fit_card_is_complete(card: str, item: dict) -> bool:
+    """True if the caption ends cleanly and names the item's price and platform."""
+    text = card.strip()
+    if not text or text[-1].isalnum() or text[-1] in ",;:-":
+        return False
+    price = item["price"]
+    prices = {f"${price:.2f}", f"${price:g}", f"${price:.0f}"}
+    return any(p in text for p in prices) and item["platform"].lower() in text.lower()

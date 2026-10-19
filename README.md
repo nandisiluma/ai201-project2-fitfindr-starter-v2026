@@ -252,7 +252,7 @@ Manifested a pair of Vintage Levi's 501 Jeans in the absolute best medium wash a
 | Criterion | Target | Try 1 | Try 2 | Try 3 | Try 4 | Try 5 | Verdict |
 |---|---|---|---|---|---|---|---|
 | 1. matching query completes | 4/5 | PASS  | PASS  | PASS  | PASS  | PASS  | MET |
-| 2. impossible query stops early | 5/5 | PASS  | PASS  | PASS  | PASS  | PASS  | PASS |
+| 2. impossible query stops early | 5/5 | PASS  | PASS  | PASS  | PASS  | PASS  | MET |
 | empty wardrobe _(diagnostic — not one of your five)_ |  |   |   |   |   |   |  |
 | 3. selected item reaches suggest_outfit | 5/5 | PASS  | PASS  | PASS  | PASS  | PASS  | MET |
 | 4. fit card names price and platform | 5/5 | FAILED (sentence cut off)  | PASS  | PASS  | PASS  | PASS  | MISSED (4/5) |
@@ -263,7 +263,7 @@ that produced it:
 
 ```
 
-[1] parse_query
+[1] parse*query
 in: vintage graphic tee under $30, size M
 out: {'description': 'vintage graphic tee', 'size': 'M', 'max_price': 30.0}
 [2] search_listings (via MCP)
@@ -274,7 +274,7 @@ in: results[0]
 out: Y2K Baby Tee — Butterfly Print ($18.0, depop)
 [4] suggest_outfit
 in: item='Y2K Baby Tee — Butterfly Print', wardrobe_items=10
-out: **Outfit 1: Y2K Streetwear Contrast** _ **Top:** Y2K Baby Tee — Butterfly Print _ **Bottoms:** Baggy strai…
+out: **Outfit 1: Y2K Streetwear Contrast** * **Top:** Y2K Baby Tee — Butterfly Print \_ **Bottoms:** Baggy strai…
 [5] create_fit_card
 in: item='Y2K Baby Tee — Butterfly Print'
 out: Found this absolute holy grail Y2K baby tee with the cutest butterfly print on depop today for only $18. It’s …
@@ -312,7 +312,7 @@ out: Found this absolute holy grail Y2K baby tee with the cutest butterfly print
 **Diagnoses**
 
 - **Criterion 4 (fit card), the model's output, in `create_fit_card` in tools.py.** It missed on 1 of 5 tries. In try 1 the caption stopped mid-sentence, so the price and platform mention was incomplete. The tool ran and the item data was correct. The failure was in the generated text. The prompt asks for two to four sentences with price and platform each mentioned once, but nothing in the prompt or the `generate()` call guarantees a complete caption. The cut-off looks like a truncated model response, though I haven't confirmed the cause (for example a token limit). The cause is a guess until I check the raw response. Because it appeared in only 1 of 5 tries, it is a model-variance problem and not a deterministic bug in the tool or the loop.
-- **Criteria 1, 2, 3 and 5:** no misses, so nothing to diagnose. Criterion 2 is listed as MET and not PASS, because MET and MISSED are the verdict values for this table.
+
 
 ---
 
@@ -332,7 +332,7 @@ out: Found this absolute holy grail Y2K baby tee with the cutest butterfly print
 
 ```
 
-[1] parse_query
+[1] parse*query
 in: vintage graphic tee under $30, size M
 out: {'description': 'vintage graphic tee', 'size': 'M', 'max_price': 30.0}
 [2] search_listings (via MCP)
@@ -343,7 +343,7 @@ in: results[0]
 out: Y2K Baby Tee — Butterfly Print ($18.0, depop)
 [4] suggest_outfit
 in: item='Y2K Baby Tee — Butterfly Print', wardrobe_items=10
-out: **Outfit 1: Y2K Streetwear** _ **Top:** Y2K Baby Tee — Butterfly Print _ **Bottoms:** Baggy straight-leg j…
+out: **Outfit 1: Y2K Streetwear** * **Top:** Y2K Baby Tee — Butterfly Print \_ **Bottoms:** Baggy straight-leg j…
 [5] create_fit_card
 in: item='Y2K Baby Tee — Butterfly Print'
 out: I seriously can’t believe I scored this Y2K baby tee on depop for only $18. The little pink and purple butterf…
@@ -379,24 +379,21 @@ full. -->
 
      `python run_eval.py --label after` -->
 
-**What I changed:**
+**What I changed:** I added a check-and-retry to `create_fit_card` in `tools.py`. A new helper, `_fit_card_is_complete`, checks that the caption names the item's price and platform and doesn't end on a letter, digit or comma-type character. If the caption fails, the tool asks the model again, up to 3 attempts in total. Retries bypass the cache, because the cache would return the same bad caption. If all 3 attempts fail, the tool returns the last caption.
 
-**Which failure it was meant to fix:**
+**Which failure it was meant to fix:** Criterion 4 missed 4/5 against a 5/5 target. In try 1 the model's caption stopped mid-sentence, so the price and platform mention was incomplete. This was a model-output failure and not a bug in the tool or the loop.
 
 ### Run Log — After
 
 | Criterion | Target | Try 1 | Try 2 | Try 3 | Try 4 | Try 5 | Verdict |
 | --------- | ------ | ----- | ----- | ----- | ----- | ----- | ------- |
-| 1.        |        |       |       |       |       |       |         |
-| 2.        |        |       |       |       |       |       |         |
-| 3.        |        |       |       |       |       |       |         |
-| 4.        |        |       |       |       |       |       |         |
-| 5.        |        |       |       |       |       |       |         |
+| 1. matching query completes | 4/5 | PASS | PASS | PASS | PASS | PASS | MET |
+| 2. impossible query stops early | 5/5 | PASS | PASS | PASS | PASS | PASS | MET |
+| 3. selected item reaches suggest_outfit | 5/5 | PASS | PASS | PASS | PASS | PASS | MET |
+| 4. fit card names price and platform | 5/5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 5. size in query is respected | 4/5 | PASS | PASS | PASS | PASS | PASS | MET |
 
-**Did it help, and how do I know:**
-
-<!-- If it made things worse, say that. Honestly reported, that earns full
-     credit and is more interesting than one that worked. -->
+**Did it help, and how do I know:** Yes. Criterion 4 went from MISSED (4/5) to MET (5/5), and the other four criteria are unchanged, all still met with 5/5. Captions still sometimes look cut off mid-sentence. That no longer matters for this criterion, because every caption in the after-run named the price and platform. One caveat: this is a single 5-try run, and the original failure was 1 in 5. So 5/5 is consistent with the fix working but doesn't prove it. The original failure could also have just not shown up this time.
 
 ---
 
