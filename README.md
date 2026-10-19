@@ -403,6 +403,13 @@ full. -->
      you did. "I ran out of time" is fine if it's true. Pretending nothing is
      left is not. -->
 
+No criterion is missed in the after-run; all five are MET. Some things are still unresolved, and I stopped because I ran out of time.
+
+- **Cut-off captions:** Fit cards can still look cut off mid-sentence. The retry only checks that the caption names the price and platform and doesn't end on a letter, digit or comma-type character, so it passes captions that I'd call cut off. I never found the cause. The code sets no token limit, and I didn't inspect the raw model response. Next I'd log the raw response and its finish reason, to see whether it's truncation or the model ending early.
+- **Thin evidence for the fix:** The after-run is one 5-try run, and the original miss was 1 in 5. 5/5 is consistent with the fix working but doesn't prove it. I'd re-run it several times to be sure.
+- **Retry cost:** Each retry is an extra model call against the free-tier rate limit. I haven't measured how often retries happen.
+
+
 <!-- ═════════════════════════════════════════════════════════════════════
 
      SUBMISSION CHECKLIST — unit 3
